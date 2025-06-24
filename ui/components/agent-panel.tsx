@@ -13,11 +13,11 @@ interface AgentPanelProps {
   events: AgentEvent[];
   guardrails: GuardrailCheck[];
   context: {
-    passenger_name?: string;
-    confirmation_number?: string;
-    seat_number?: string;
-    flight_number?: string;
-    account_number?: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    github?: string;
+    portfolio?: string;
   };
 }
 
@@ -49,7 +49,15 @@ export function AgentPanel({
           guardrails={guardrails}
           inputGuardrails={activeAgent?.input_guardrails ?? []}
         />
-        <ConversationContext context={context} />
+        <ConversationContext
+          context={{
+            name: context.name || "",
+            email: context.email || "",
+            phone: context.phone || "",
+            github: context.github || "",
+            portfolio: context.portfolio || "",
+          }}
+        />
         <RunnerOutput runnerEvents={runnerEvents} />
       </div>
     </div>
