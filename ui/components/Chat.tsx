@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import type { Message } from "@/lib/types";
 import ReactMarkdown from "react-markdown";
 import { SeatMap } from "./seat-map";
+import { ArticlePreviewList } from "./article-preview-list";
 
 interface ChatProps {
   messages: Message[];
@@ -17,7 +18,9 @@ export function Chat({ messages, onSendMessage, isLoading }: ChatProps) {
   const [inputText, setInputText] = useState("");
   const [isComposing, setIsComposing] = useState(false);
   const [showSeatMap, setShowSeatMap] = useState(false);
-  const [selectedSeat, setSelectedSeat] = useState<string | undefined>(undefined);
+  const [selectedSeat, setSelectedSeat] = useState<string | undefined>(
+    undefined
+  );
 
   // Auto-scroll to bottom when messages or loading indicator change
   useEffect(() => {
@@ -71,11 +74,49 @@ export function Chat({ messages, onSendMessage, isLoading }: ChatProps) {
       <div className="flex-1 overflow-y-auto min-h-0 md:px-4 pt-4 pb-20">
         {messages.map((msg, idx) => {
           if (msg.content === "DISPLAY_SEAT_MAP") return null; // Skip rendering marker message
+          if (msg.content === "DISPLAY_ARTICLE_LIST") {
+            // 예시 아티클 데이터
+            const articles = [
+              {
+                thumbnail:
+                  "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+                title: "Yellow & White",
+                description: "프리미엄 시리즈",
+              },
+              {
+                thumbnail:
+                  "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+                title: "[기획전] ART POSTER 12종",
+                description: "지금 할인 쿠폰 행사중",
+              },
+              {
+                thumbnail:
+                  "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+                title: "버라이어티팩",
+                description: "라이언 페이싱 시리즈",
+              },
+            ];
+            const actions = [
+              {
+                label: "자세히 보기",
+                onClick: () => window.open("https://example.com", "_blank"),
+              },
+              { label: "공유하기", onClick: () => alert("공유하기 클릭!") },
+            ];
+            return (
+              <div key={idx} className="flex justify-start mb-5">
+                <div className="mr-4 rounded-[16px] rounded-bl-[4px] md:mr-24">
+                  <ArticlePreviewList articles={articles} actions={actions} />
+                </div>
+              </div>
+            );
+          }
           return (
             <div
               key={idx}
-              className={`flex mb-5 text-sm ${msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
+              className={`flex mb-5 text-sm ${
+                msg.role === "user" ? "justify-end" : "justify-start"
+              }`}
             >
               {msg.role === "user" ? (
                 <div className="ml-4 rounded-[16px] rounded-br-[4px] px-4 py-2 md:ml-24 bg-black text-white font-light max-w-[80%]">
