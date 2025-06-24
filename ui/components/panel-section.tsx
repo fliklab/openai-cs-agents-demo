@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface PanelSectionProps {
   title: string;
-  icon: React.ReactNode;
+  icon: React.ReactElement;
   children: React.ReactNode;
 }
 
@@ -24,8 +24,10 @@ export function PanelSection({ title, icon, children }: PanelSectionProps) {
           <span>{title}</span>
         </div>
         {show ? (
+          // @ts-expect-error lucide-react 타입 호환 우회
           <ChevronDown className="h-4 w-4 text-zinc-900" />
         ) : (
+          // @ts-expect-error lucide-react 타입 호환 우회
           <ChevronRight className="h-4 w-4 text-zinc-900" />
         )}
       </h2>

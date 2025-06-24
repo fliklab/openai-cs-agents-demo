@@ -133,3 +133,5 @@ node_modules/
 # ui stuff
 
 ui/.next/
+
+.vercel
