@@ -2,6 +2,13 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
+const ChevronDownIcon = ChevronDown as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+const ChevronRightIcon = ChevronRight as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+
 interface PanelSectionProps {
   title: string;
   icon: React.ReactElement;
@@ -24,11 +31,9 @@ export function PanelSection({ title, icon, children }: PanelSectionProps) {
           <span>{title}</span>
         </div>
         {show ? (
-          // @ts-expect-error lucide-react 타입 호환 우회
-          <ChevronDown className="h-4 w-4 text-zinc-900" />
+          <ChevronDownIcon className="h-4 w-4 text-zinc-900" />
         ) : (
-          // @ts-expect-error lucide-react 타입 호환 우회
-          <ChevronRight className="h-4 w-4 text-zinc-900" />
+          <ChevronRightIcon className="h-4 w-4 text-zinc-900" />
         )}
       </h2>
       {show && children}
