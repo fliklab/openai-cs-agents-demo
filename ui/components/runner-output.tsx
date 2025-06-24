@@ -4,17 +4,33 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { AgentEvent } from "@/lib/types";
 import {
-  ArrowRightLeft,
-  Wrench,
-  WrenchIcon,
-  RefreshCw,
-  MessageSquareMore,
+  ArrowRightLeft as LucideArrowRightLeft,
+  Wrench as LucideWrench,
+  WrenchIcon as LucideWrenchIcon,
+  RefreshCw as LucideRefreshCw,
+  MessageSquareMore as LucideMessageSquareMore,
 } from "lucide-react";
 import { PanelSection } from "./panel-section";
 
 interface RunnerOutputProps {
   runnerEvents: AgentEvent[];
 }
+
+const ArrowRightLeftIcon = LucideArrowRightLeft as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+const WrenchIcon = LucideWrench as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+const WrenchIconAlt = LucideWrenchIcon as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+const RefreshCwIcon = LucideRefreshCw as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+const MessageSquareMoreIcon = LucideMessageSquareMore as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
 
 function formatEventName(type: string) {
   return (type.charAt(0).toUpperCase() + type.slice(1)).replace("_", " ");
@@ -24,13 +40,13 @@ function EventIcon({ type }: { type: string }) {
   const className = "h-4 w-4 text-zinc-600";
   switch (type) {
     case "handoff":
-      return <ArrowRightLeft className={className} />;
+      return <ArrowRightLeftIcon className={className} />;
     case "tool_call":
-      return <Wrench className={className} />;
-    case "tool_output":
       return <WrenchIcon className={className} />;
+    case "tool_output":
+      return <WrenchIconAlt className={className} />;
     case "context_update":
-      return <RefreshCw className={className} />;
+      return <RefreshCwIcon className={className} />;
     default:
       return null;
   }
@@ -128,42 +144,45 @@ function TimeBadge({ timestamp }: { timestamp: Date }) {
 export function RunnerOutput({ runnerEvents }: RunnerOutputProps) {
   return (
     <div className="flex-1 overflow-hidden">
-      <PanelSection title="Runner Output" icon={<MessageSquareMore className="h-4 w-4 text-blue-600" />}>
+      <PanelSection
+        title="검증 결과"
+        icon={<MessageSquareMoreIcon className="h-4 w-4 text-blue-600" />}
+      >
         <ScrollArea className="h-[calc(100%-2rem)] rounded-md border border-gray-200 bg-gray-100 shadow-sm">
-        <div className="p-4 space-y-3">
-          {runnerEvents.length === 0 ? (
-            <p className="text-center text-zinc-500 p-4">
-              No runner events yet
-            </p>
-          ) : (
-            runnerEvents.map((event) => (
-              <Card
-                key={event.id}
-                className="border border-gray-200 bg-white shadow-sm rounded-lg"
-              >
-                <CardHeader className="flex flex-row justify-between items-center p-4">
-                  <span className="font-medium text-gray-800 text-sm">
-                    {event.agent}
-                  </span>
-                  <TimeBadge timestamp={event.timestamp} />
-                </CardHeader>
+          <div className="p-4 space-y-3">
+            {runnerEvents.length === 0 ? (
+              <p className="text-center text-zinc-500 p-4">
+                아직 검증 결과가 없습니다
+              </p>
+            ) : (
+              runnerEvents.map((event) => (
+                <Card
+                  key={event.id}
+                  className="border border-gray-200 bg-white shadow-sm rounded-lg"
+                >
+                  <CardHeader className="flex flex-row justify-between items-center p-4">
+                    <span className="font-medium text-gray-800 text-sm">
+                      {event.agent}
+                    </span>
+                    <TimeBadge timestamp={event.timestamp} />
+                  </CardHeader>
 
-                <CardContent className="flex items-start gap-3 p-4">
-                  <div className="rounded-full p-2 bg-gray-100 flex items-center gap-2">
-                    <EventIcon type={event.type} />
-                    <div className="text-xs text-gray-600">
-                      {formatEventName(event.type)}
+                  <CardContent className="flex items-start gap-3 p-4">
+                    <div className="rounded-full p-2 bg-gray-100 flex items-center gap-2">
+                      <EventIcon type={event.type} />
+                      <div className="text-xs text-gray-600">
+                        {formatEventName(event.type)}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex-1">
-                    <EventDetails event={event} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                    <div className="flex-1">
+                      <EventDetails event={event} />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         </ScrollArea>
       </PanelSection>
     </div>

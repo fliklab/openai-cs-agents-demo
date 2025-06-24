@@ -2,7 +2,11 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, CheckCircle, XCircle } from "lucide-react";
+import {
+  Shield as LucideShield,
+  CheckCircle as LucideCheckCircle,
+  XCircle as LucideXCircle,
+} from "lucide-react";
 import { PanelSection } from "./panel-section";
 import type { GuardrailCheck } from "@/lib/types";
 
@@ -11,16 +15,25 @@ interface GuardrailsProps {
   inputGuardrails: string[];
 }
 
+const ShieldIcon = LucideShield as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+const CheckCircleIcon = LucideCheckCircle as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+const XCircleIcon = LucideXCircle as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
+
 export function Guardrails({ guardrails, inputGuardrails }: GuardrailsProps) {
   const guardrailNameMap: Record<string, string> = {
-    relevance_guardrail: "Relevance Guardrail",
-    jailbreak_guardrail: "Jailbreak Guardrail",
+    relevance_guardrail: "경력 검증",
+    jailbreak_guardrail: "프로젝트 검증",
   };
 
   const guardrailDescriptionMap: Record<string, string> = {
-    "Relevance Guardrail": "Ensure messages are relevant to airline support",
-    "Jailbreak Guardrail":
-      "Detect and block attempts to bypass or override system instructions",
+    "경력 검증": "입력된 경력이 실제와 일치하는지 검증합니다.",
+    "프로젝트 검증": "프로젝트 경험의 진위 여부를 검증합니다.",
   };
 
   const extractGuardrailName = (rawName: string): string =>
@@ -43,8 +56,8 @@ export function Guardrails({ guardrails, inputGuardrails }: GuardrailsProps) {
 
   return (
     <PanelSection
-      title="Guardrails"
-      icon={<Shield className="h-4 w-4 text-blue-600" />}
+      title="검증 항목"
+      icon={<ShieldIcon className="h-4 w-4 text-blue-600" />}
     >
       <div className="grid grid-cols-3 gap-3">
         {guardrailsToShow.map((gr) => (
@@ -69,12 +82,12 @@ export function Guardrails({ guardrails, inputGuardrails }: GuardrailsProps) {
               <div className="flex text-xs">
                 {!gr.input || gr.passed ? (
                   <Badge className="mt-2 px-2 py-1 bg-emerald-500 hover:bg-emerald-600 flex items-center text-white">
-                    <CheckCircle className="h-4 w-4 mr-1 text-white" />
+                    <CheckCircleIcon className="h-4 w-4 mr-1 text-white" />
                     Passed
                   </Badge>
                 ) : (
                   <Badge className="mt-2 px-2 py-1 bg-red-500 hover:bg-red-600 flex items-center text-white">
-                    <XCircle className="h-4 w-4 mr-1 text-white" />
+                    <XCircleIcon className="h-4 w-4 mr-1 text-white" />
                     Failed
                   </Badge>
                 )}

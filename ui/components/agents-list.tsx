@@ -2,7 +2,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bot } from "lucide-react";
+import { Bot as LucideBot } from "lucide-react";
 import { PanelSection } from "./panel-section";
 import type { Agent } from "@/lib/types";
 
@@ -11,12 +11,14 @@ interface AgentsListProps {
   currentAgent: string;
 }
 
+const BotIcon = LucideBot as unknown as React.FC<React.SVGProps<SVGSVGElement>>;
+
 export function AgentsList({ agents, currentAgent }: AgentsListProps) {
   const activeAgent = agents.find((a) => a.name === currentAgent);
   return (
     <PanelSection
-      title="에이전트 목록"
-      icon={<Bot className="h-4 w-4 text-blue-600" />}
+      title="자기소개서 항목"
+      icon={<BotIcon className="h-4 w-4 text-blue-600" />}
     >
       <div className="grid grid-cols-3 gap-3">
         {agents.map((agent) => (
@@ -36,7 +38,7 @@ export function AgentsList({ agents, currentAgent }: AgentsListProps) {
             <CardHeader className="p-3 pb-1 flex items-center gap-2">
               {agent.icon && (
                 <span className="mr-2">
-                  <Bot className="h-4 w-4 text-blue-600" />
+                  <BotIcon className="h-4 w-4 text-blue-600" />
                 </span>
               )}
               <CardTitle className="text-sm flex items-center text-zinc-900">

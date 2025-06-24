@@ -2,23 +2,27 @@
 
 import { PanelSection } from "./panel-section";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookText } from "lucide-react";
+import { BookText as LucideBookText } from "lucide-react";
 
 interface ConversationContextProps {
   context: {
-    passenger_name?: string;
-    confirmation_number?: string;
-    seat_number?: string;
-    flight_number?: string;
-    account_number?: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    github?: string;
+    portfolio?: string;
   };
 }
+
+const BookTextIcon = LucideBookText as unknown as React.FC<
+  React.SVGProps<SVGSVGElement>
+>;
 
 export function ConversationContext({ context }: ConversationContextProps) {
   return (
     <PanelSection
       title="Conversation Context"
-      icon={<BookText className="h-4 w-4 text-blue-600" />}
+      icon={<BookTextIcon className="h-4 w-4 text-blue-600" />}
     >
       <Card className="bg-gradient-to-r from-white to-gray-50 border-gray-200 shadow-sm">
         <CardContent className="p-3">
