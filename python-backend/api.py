@@ -36,6 +36,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3004"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,13 +46,16 @@ app.add_middleware(
 # Models
 # =========================
 
+
 class ChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     message: str
 
+
 class MessageResponse(BaseModel):
     content: str
     agent: str
+
 
 class AgentEvent(BaseModel):
     id: str
@@ -61,6 +65,7 @@ class AgentEvent(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
     timestamp: Optional[float] = None
 
+
 class GuardrailCheck(BaseModel):
     id: str
     name: str
@@ -68,6 +73,7 @@ class GuardrailCheck(BaseModel):
     reasoning: str
     passed: bool
     timestamp: float
+
 
 class ChatResponse(BaseModel):
     conversation_id: str
@@ -82,12 +88,14 @@ class ChatResponse(BaseModel):
 # In-memory store for conversation state
 # =========================
 
+
 class ConversationStore:
     def get(self, conversation_id: str) -> Optional[Dict[str, Any]]:
         pass
 
     def save(self, conversation_id: str, state: Dict[str, Any]):
         pass
+
 
 class InMemoryConversationStore(ConversationStore):
     _conversations: Dict[str, Dict[str, Any]] = {}
@@ -98,12 +106,14 @@ class InMemoryConversationStore(ConversationStore):
     def save(self, conversation_id: str, state: Dict[str, Any]):
         self._conversations[conversation_id] = state
 
+
 # TODO: when deploying this app in scale, switch to your own production-ready implementation
 conversation_store = InMemoryConversationStore()
 
 # =========================
 # Helpers
 # =========================
+
 
 def _get_agent_by_name(name: str):
     """Return the agent object by name."""
@@ -115,6 +125,7 @@ def _get_agent_by_name(name: str):
         cancellation_agent.name: cancellation_agent,
     }
     return agents.get(name, triage_agent)
+
 
 def _get_guardrail_name(g) -> str:
     """Extract a friendly guardrail name."""
@@ -128,6 +139,7 @@ def _get_guardrail_name(g) -> str:
     if isinstance(fn_name, str) and fn_name:
         return fn_name.replace("_", " ").title()
     return str(g)
+
 
 def _build_agents_list() -> List[Dict[str, Any]]:
     """Build a list of all available agents and their metadata."""
@@ -151,6 +163,7 @@ def _build_agents_list() -> List[Dict[str, Any]]:
 # Main Chat Endpoint
 # =========================
 
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(req: ChatRequest):
     """
@@ -158,7 +171,8 @@ async def chat_endpoint(req: ChatRequest):
     Handles conversation state, agent routing, and guardrail checks.
     """
     # Initialize or retrieve conversation state
-    is_new = not req.conversation_id or conversation_store.get(req.conversation_id) is None
+    is_new = not req.conversation_id or conversation_store.get(
+        req.conversation_id) is None
     if is_new:
         conversation_id: str = uuid4().hex
         ctx = create_initial_context()
@@ -210,7 +224,8 @@ async def chat_endpoint(req: ChatRequest):
         return ChatResponse(
             conversation_id=conversation_id,
             current_agent=current_agent.name,
-            messages=[MessageResponse(content=refusal, agent=current_agent.name)],
+            messages=[MessageResponse(
+                content=refusal, agent=current_agent.name)],
             events=[],
             context=state["context"].model_dump(),
             agents=_build_agents_list(),
@@ -223,8 +238,10 @@ async def chat_endpoint(req: ChatRequest):
     for item in result.new_items:
         if isinstance(item, MessageOutputItem):
             text = ItemHelpers.text_message_output(item)
-            messages.append(MessageResponse(content=text, agent=item.agent.name))
-            events.append(AgentEvent(id=uuid4().hex, type="message", agent=item.agent.name, content=text))
+            messages.append(MessageResponse(
+                content=text, agent=item.agent.name))
+            events.append(AgentEvent(id=uuid4().hex, type="message",
+                          agent=item.agent.name, content=text))
         # Handle handoff output and agent switching
         elif isinstance(item, HandoffOutputItem):
             # Record the handoff event
@@ -234,7 +251,8 @@ async def chat_endpoint(req: ChatRequest):
                     type="handoff",
                     agent=item.source_agent.name,
                     content=f"{item.source_agent.name} -> {item.target_agent.name}",
-                    metadata={"source_agent": item.source_agent.name, "target_agent": item.target_agent.name},
+                    metadata={"source_agent": item.source_agent.name,
+                              "target_agent": item.target_agent.name},
                 )
             )
             # If there is an on_handoff callback defined for this handoff, show it as a tool call
@@ -303,7 +321,8 @@ async def chat_endpoint(req: ChatRequest):
             )
 
     new_context = state["context"].dict()
-    changes = {k: new_context[k] for k in new_context if old_context.get(k) != new_context[k]}
+    changes = {k: new_context[k]
+               for k in new_context if old_context.get(k) != new_context[k]}
     if changes:
         events.append(
             AgentEvent(

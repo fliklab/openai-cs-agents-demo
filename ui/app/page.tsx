@@ -21,9 +21,13 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       const data = await callChatAPI("", conversationId ?? "");
-      setConversationId(data.conversation_id);
-      setCurrentAgent(data.current_agent);
-      setContext(data.context);
+      if (!data) {
+        console.error("Failed to initialize conversation");
+        return;
+      }
+      setConversationId(data.conversation_id || "");
+      setCurrentAgent(data.current_agent || "");
+      setContext(data.context || {});
       const initialEvents = (data.events || []).map((e: any) => ({
         ...e,
         timestamp: e.timestamp ?? Date.now(),
@@ -59,9 +63,15 @@ export default function Home() {
 
     const data = await callChatAPI(content, conversationId ?? "");
 
-    if (!conversationId) setConversationId(data.conversation_id);
-    setCurrentAgent(data.current_agent);
-    setContext(data.context);
+    if (!data) {
+      console.error("Failed to send message");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!conversationId) setConversationId(data.conversation_id || "");
+    setCurrentAgent(data.current_agent || "");
+    setContext(data.context || {});
     if (data.events) {
       const stamped = data.events.map((e: any) => ({
         ...e,
