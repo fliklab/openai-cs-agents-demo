@@ -202,149 +202,62 @@ async def jailbreak_guardrail(
     return GuardrailFunctionOutput(output_info=final, tripwire_triggered=not final.is_safe)
 
 # =========================
-# AGENTS
+# AGENTS (리팩토링)
 # =========================
 
-
-def seat_booking_instructions(
-    run_context: RunContextWrapper[DeveloperProfileContext], agent: Agent[DeveloperProfileContext]
-) -> str:
-    ctx = run_context.context
-    confirmation = ctx.confirmation_number or "[unknown]"
-    return (
-        f"{RECOMMENDED_PROMPT_PREFIX}\n"
-        "You are a seat booking agent. If you are speaking to a customer, you probably were transferred to from the triage agent.\n"
-        "Use the following routine to support the customer.\n"
-        f"1. The customer's confirmation number is {confirmation}." +
-        "If this is not available, ask the customer for their confirmation number. If you have it, confirm that is the confirmation number they are referencing.\n"
-        "2. Ask the customer what their desired seat number is. You can also use the display_seat_map tool to show them an interactive seat map where they can click to select their preferred seat.\n"
-        "3. Use the update seat tool to update the seat on the flight.\n"
-        "If the customer asks a question that is not related to the routine, transfer back to the triage agent."
-    )
-
-
-seat_booking_agent = Agent[DeveloperProfileContext](
-    name="Seat Booking Agent",
+# 자기소개 에이전트
+intro_agent = Agent(
+    name="자기소개 에이전트",
     model="gpt-4.1",
-    handoff_description="A helpful agent that can update a seat on a flight.",
-    instructions=seat_booking_instructions,
-    tools=[display_seat_map],
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+    handoff_description="개발자 자기소개를 도와주는 에이전트입니다.",
+    instructions="사용자의 이름, 이메일, 연락처, 간단한 자기소개를 받아 자기소개 섹션을 완성합니다.",
+    tools=[update_profile],
 )
 
-
-def flight_status_instructions(
-    run_context: RunContextWrapper[DeveloperProfileContext], agent: Agent[DeveloperProfileContext]
-) -> str:
-    ctx = run_context.context
-    confirmation = ctx.confirmation_number or "[unknown]"
-    flight = ctx.flight_number or "[unknown]"
-    return (
-        f"{RECOMMENDED_PROMPT_PREFIX}\n"
-        "You are a Flight Status Agent. Use the following routine to support the customer:\n"
-        f"1. The customer's confirmation number is {confirmation} and flight number is {flight}.\n"
-        "   If either is not available, ask the customer for the missing information. If you have both, confirm with the customer that these are correct.\n"
-        "2. Use the flight_status_tool to report the status of the flight.\n"
-        "If the customer asks a question that is not related to flight status, transfer back to the triage agent."
-    )
-
-
-flight_status_agent = Agent[DeveloperProfileContext](
-    name="Flight Status Agent",
+# 경력 에이전트
+career_agent = Agent(
+    name="경력 에이전트",
     model="gpt-4.1",
-    handoff_description="An agent to provide flight status information.",
-    instructions=flight_status_instructions,
-    tools=[flight_status_tool],
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+    handoff_description="개발자 경력(회사, 기간, 역할 등)을 관리하는 에이전트입니다.",
+    instructions="경력 추가, 수정, 삭제 등 경력 관련 요청을 처리합니다.",
+    tools=[],
 )
 
-# Cancellation tool and agent
-
-
-@function_tool(
-    name_override="cancel_flight",
-    description_override="Cancel a flight."
-)
-async def cancel_flight(
-    context: RunContextWrapper[DeveloperProfileContext]
-) -> str:
-    """Cancel the flight in the context."""
-    fn = context.context.flight_number
-    assert fn is not None, "Flight number is required"
-    return f"Flight {fn} successfully cancelled"
-
-
-async def on_cancellation_handoff(
-    context: RunContextWrapper[DeveloperProfileContext]
-) -> None:
-    """Ensure context has a confirmation and flight number when handing off to cancellation."""
-    if context.context.confirmation_number is None:
-        context.context.confirmation_number = "".join(
-            random.choices(string.ascii_uppercase + string.digits, k=6)
-        )
-    if context.context.flight_number is None:
-        context.context.flight_number = f"FLT-{random.randint(100, 999)}"
-
-
-def cancellation_instructions(
-    run_context: RunContextWrapper[DeveloperProfileContext], agent: Agent[DeveloperProfileContext]
-) -> str:
-    ctx = run_context.context
-    confirmation = ctx.confirmation_number or "[unknown]"
-    flight = ctx.flight_number or "[unknown]"
-    return (
-        f"{RECOMMENDED_PROMPT_PREFIX}\n"
-        "You are a Cancellation Agent. Use the following routine to support the customer:\n"
-        f"1. The customer's confirmation number is {confirmation} and flight number is {flight}.\n"
-        "   If either is not available, ask the customer for the missing information. If you have both, confirm with the customer that these are correct.\n"
-        "2. If the customer confirms, use the cancel_flight tool to cancel their flight.\n"
-        "If the customer asks anything else, transfer back to the triage agent."
-    )
-
-
-cancellation_agent = Agent[DeveloperProfileContext](
-    name="Cancellation Agent",
+# 프로젝트 에이전트
+project_agent = Agent(
+    name="프로젝트 에이전트",
     model="gpt-4.1",
-    handoff_description="An agent to cancel flights.",
-    instructions=cancellation_instructions,
-    tools=[cancel_flight],
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+    handoff_description="개발자 프로젝트 정보를 관리하는 에이전트입니다.",
+    instructions="프로젝트 추가, 설명, 기술스택 등 프로젝트 관련 요청을 처리합니다.",
+    tools=[add_project],
 )
 
-faq_agent = Agent[DeveloperProfileContext](
-    name="FAQ Agent",
+# 기술스택 에이전트
+tech_agent = Agent(
+    name="기술스택 에이전트",
     model="gpt-4.1",
-    handoff_description="A helpful agent that can answer questions about the airline.",
-    instructions=f"""{RECOMMENDED_PROMPT_PREFIX}
-    You are an FAQ agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
-    Use the following routine to support the customer.
-    1. Identify the last question asked by the customer.
-    2. Use the faq lookup tool to get the answer. Do not rely on your own knowledge.
-    3. Respond to the customer with the answer""",
+    handoff_description="개발자의 기술스택 정보를 관리하는 에이전트입니다.",
+    instructions="기술스택 추가, 수정, 삭제 등 기술스택 관련 요청을 처리합니다.",
+    tools=[],
+)
+
+# FAQ 에이전트
+faq_agent = Agent(
+    name="FAQ 에이전트",
+    model="gpt-4.1",
+    handoff_description="개발자 자기소개서 FAQ를 안내하는 에이전트입니다.",
+    instructions="자주 묻는 질문에 답변합니다.",
     tools=[faq_lookup_tool],
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 
-triage_agent = Agent[DeveloperProfileContext](
-    name="Triage Agent",
+# 메인 트라이에이지 에이전트
+triage_agent = Agent(
+    name="트라이에이지 에이전트",
     model="gpt-4.1",
-    handoff_description="A triage agent that can delegate a customer's request to the appropriate agent.",
-    instructions=(
-        f"{RECOMMENDED_PROMPT_PREFIX} "
-        "You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents."
-    ),
-    handoffs=[
-        flight_status_agent,
-        handoff(agent=cancellation_agent, on_handoff=on_cancellation_handoff),
-        faq_agent,
-        handoff(agent=seat_booking_agent, on_handoff=on_seat_booking_handoff),
-    ],
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+    handoff_description="사용자의 요청을 적절한 자기소개서 에이전트로 연결합니다.",
+    instructions="요청을 분석하여 적합한 에이전트로 연결합니다.",
+    handoffs=[intro_agent, career_agent, project_agent, tech_agent, faq_agent],
 )
 
 # Set up handoff relationships
 faq_agent.handoffs.append(triage_agent)
-seat_booking_agent.handoffs.append(triage_agent)
-flight_status_agent.handoffs.append(triage_agent)
-# Add cancellation agent handoff back to triage
-cancellation_agent.handoffs.append(triage_agent)
