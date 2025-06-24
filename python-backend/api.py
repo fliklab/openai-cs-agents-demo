@@ -9,9 +9,14 @@ import logging
 from main import (
     triage_agent,
     faq_agent,
-    seat_booking_agent,
-    flight_status_agent,
-    cancellation_agent,
+    about_me_agent,
+    awards_agent,
+    certifications_agent,
+    portfolio_summary_agent,
+    project_agent,
+    experience_agent,
+    strength_agent,
+    tech_agent,
     create_initial_context,
 )
 
@@ -120,9 +125,14 @@ def _get_agent_by_name(name: str):
     agents = {
         triage_agent.name: triage_agent,
         faq_agent.name: faq_agent,
-        seat_booking_agent.name: seat_booking_agent,
-        flight_status_agent.name: flight_status_agent,
-        cancellation_agent.name: cancellation_agent,
+        about_me_agent.name: about_me_agent,
+        awards_agent.name: awards_agent,
+        certifications_agent.name: certifications_agent,
+        portfolio_summary_agent.name: portfolio_summary_agent,
+        project_agent.name: project_agent,
+        experience_agent.name: experience_agent,
+        strength_agent.name: strength_agent,
+        tech_agent.name: tech_agent,
     }
     return agents.get(name, triage_agent)
 
@@ -154,9 +164,14 @@ def _build_agents_list() -> List[Dict[str, Any]]:
     return [
         make_agent_dict(triage_agent),
         make_agent_dict(faq_agent),
-        make_agent_dict(seat_booking_agent),
-        make_agent_dict(flight_status_agent),
-        make_agent_dict(cancellation_agent),
+        make_agent_dict(about_me_agent),
+        make_agent_dict(awards_agent),
+        make_agent_dict(certifications_agent),
+        make_agent_dict(portfolio_summary_agent),
+        make_agent_dict(project_agent),
+        make_agent_dict(experience_agent),
+        make_agent_dict(strength_agent),
+        make_agent_dict(tech_agent),
     ]
 
 # =========================
@@ -219,7 +234,7 @@ async def chat_endpoint(req: ChatRequest):
                 passed=(g != failed),
                 timestamp=gr_timestamp,
             ))
-        refusal = "Sorry, I can only answer questions related to airline travel."
+        refusal = "죄송합니다. 개발자 자기소개/포트폴리오 관련 질문만 답변할 수 있습니다."
         state["input_items"].append({"role": "assistant", "content": refusal})
         return ChatResponse(
             conversation_id=conversation_id,

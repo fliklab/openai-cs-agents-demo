@@ -3,7 +3,7 @@
 # triage_agent를 엔트리포인트로 사용
 
 from context import DeveloperProfileContext
-from agents import triage_agent
+from agents import triage_agent, about_me_agent, awards_agent, certifications_agent, portfolio_summary_agent, project_agent, experience_agent, strength_agent, tech_agent, faq_agent
 
 # 예시: 새로운 대화 컨텍스트 생성
 # 실제 서비스에서는 사용자별로 컨텍스트를 관리해야 함
