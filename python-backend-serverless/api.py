@@ -132,6 +132,17 @@ async def root():
 # =========================
 
 
+def safe_context_to_dict(ctx):
+    if isinstance(ctx, dict):
+        return ctx
+    elif hasattr(ctx, "model_dump"):
+        return ctx.model_dump()
+    elif hasattr(ctx, "dict"):
+        return ctx.dict()
+    else:
+        return {}
+
+
 def _get_agent_by_name(name: str):
     """Return the agent object by name."""
     agents = {
@@ -178,6 +189,14 @@ def _build_agents_list() -> List[Dict[str, Any]]:
         make_agent_dict(tech_agent),
     ]
 
+
+def get_agent_name(agent):
+    if isinstance(agent, str):
+        return agent
+    if hasattr(agent, "name"):
+        return agent.name
+    return None
+
 # =========================
 # Main Chat Endpoint
 # =========================
@@ -192,8 +211,7 @@ async def chat_endpoint(req: ChatRequest):
         "context": create_initial_context(),
         "current_agent": triage_agent.name,
     }
-    old_context = state["context"].dict() if hasattr(
-        state["context"], "dict") else dict(state["context"])
+    old_context = safe_context_to_dict(state["context"])
     guardrail_checks: List[GuardrailCheck] = []
 
     # 메시지 추가
@@ -225,8 +243,7 @@ async def chat_endpoint(req: ChatRequest):
             messages=[MessageResponse(
                 content=refusal, agent=current_agent.name)],
             events=[],
-            context=state["context"].dict() if hasattr(
-                state["context"], "dict") else dict(state["context"]),
+            context=safe_context_to_dict(state["context"]),
             agents=_build_agents_list(),
             guardrails=guardrail_checks,
         )
@@ -234,15 +251,52 @@ async def chat_endpoint(req: ChatRequest):
     messages: List[MessageResponse] = []
     events: List[AgentEvent] = []
 
-    # 결과 메시지 처리
-    for item in result:
-        if hasattr(item, "content"):
-            messages.append(MessageResponse(content=item.content,
-                            agent=getattr(item, "agent", None)))
+    # 꼭 필요한 핵심 프린트만 유지
+    print("=== RUNNER RESULT ===")
+    print(result)
+    items = next(
+        (v for v in [
+            getattr(result, "new_items", None),
+            getattr(result, "items", None),
+            getattr(result, "messages", None)
+        ] if v), []
+    )
+    print(f"=== items (len={len(items)}) ===")
+    for idx, item in enumerate(items):
+        print(
+            f"Item {idx}: type={type(item)}, agent={getattr(item, 'agent', None)}")
+
+    for item in items:
+        # role이 'assistant'이거나, role이 없으면 모두 추가
+        role = getattr(item, "role", None)
+        content = getattr(item, "content", None)
+        # MessageOutputItem의 경우 content가 None이고, raw_item.content에 텍스트가 있음
+        if content is None and hasattr(item, "raw_item"):
+            raw_item = getattr(item, "raw_item")
+            if hasattr(raw_item, "content"):
+                raw_content = getattr(raw_item, "content")
+                if isinstance(raw_content, list):
+                    content_text = "".join(
+                        [c.text for c in raw_content if hasattr(c, "text")]
+                    )
+                else:
+                    content_text = str(raw_content)
+            else:
+                content_text = ""
+        elif isinstance(content, list):
+            content_text = "".join(
+                [c.text for c in content if hasattr(c, "text")]
+            )
+        else:
+            content_text = content
+
+        agent_name = get_agent_name(getattr(item, "agent", None))
+        if (role is None or role == "assistant") and content_text:
+            messages.append(MessageResponse(
+                content=content_text, agent=agent_name))
         # 기타 이벤트 등은 필요시 확장
 
-    new_context = state["context"].dict() if hasattr(
-        state["context"], "dict") else dict(state["context"])
+    new_context = safe_context_to_dict(state["context"])
     changes = {k: new_context[k]
                for k in new_context if old_context.get(k) != new_context[k]}
     if changes:

@@ -3,6 +3,7 @@ from __future__ import annotations as _annotations
 import random
 from pydantic import BaseModel
 import string
+from typing import Optional
 
 from agents import (
     Agent,
@@ -23,11 +24,11 @@ from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 
 class DeveloperProfileContext(BaseModel):
     """Context for developer profile agents."""
-    name: str | None = None
-    email: str | None = None
-    phone: str | None = None
-    github: str | None = None
-    portfolio: str | None = None
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    github: Optional[str] = None
+    portfolio: Optional[str] = None
 
 
 def create_initial_context() -> DeveloperProfileContext:
@@ -246,7 +247,10 @@ faq_agent = Agent(
     name="FAQ 에이전트",
     model="gpt-4.1",
     handoff_description="개발자 자기소개서 FAQ를 안내하는 에이전트입니다.",
-    instructions="자주 묻는 질문에 답변합니다.",
+    instructions=(
+        "자주 묻는 질문이나 인사말(예: '안녕하세요', '반가워요', '반갑습니다')에 대해 친절하게 답변하세요. "
+        "FAQ가 아니더라도 간단한 인사, 자기소개 요청 등에는 직접 답변할 수 있습니다."
+    ),
     tools=[faq_lookup_tool],
 )
 
@@ -255,8 +259,12 @@ triage_agent = Agent(
     name="트라이에이지 에이전트",
     model="gpt-4.1",
     handoff_description="사용자의 요청을 적절한 자기소개서 에이전트로 연결합니다.",
-    instructions="요청을 분석하여 적합한 에이전트로 연결합니다.",
-    handoffs=[intro_agent, career_agent, project_agent, tech_agent, faq_agent],
+    instructions=(
+        "사용자의 요청을 분석하여 적합한 에이전트로 연결하세요. "
+        "만약 인사말(예: '안녕하세요', '반가워요', '반갑습니다')이나 간단한 질문이 오면 직접 친절하게 답변하세요. "
+        "FAQ 에이전트, 자기소개 에이전트, 경력 에이전트, 프로젝트 에이전트, 기술스택 에이전트로 연결할 수 있습니다."
+    ),
+    handoffs=[faq_agent, intro_agent, career_agent, project_agent, tech_agent],
 )
 
 # Set up handoff relationships
